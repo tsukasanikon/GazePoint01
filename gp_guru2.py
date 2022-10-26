@@ -122,8 +122,8 @@ class GazePointData():
         print('Save_time')
         
 
-    def disconnect(sock):
-        sock.close()
+    def disconnect(self):
+        self.sock.close()
         print('END')
     
     def record_data(self):

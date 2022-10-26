@@ -17,13 +17,15 @@ ADDRESS = (HOST, PORT)
 # gaze & target data 
 gaze_data_list = []
 target_data_list = []
+time_list = []
 dt_now = datetime.datetime.now()
 dt= dt_now.isoformat()
 name = dt[0:16]
 name = name.replace(':','_')
 name = name.replace('T','_')
-gaze_file_name = 'gaze_data_'+ name + '.csv'
-target_file_name = 'target_data_'+ name + '.csv'
+gaze_file_name = 'squash_gaze_data_'+ name + '.csv'
+target_file_name = 'squash_target_data_'+ name + '.csv'
+time_file_name = 'squash_time_'+ name + '.csv'
 
 
 # # gaze data 
@@ -35,13 +37,16 @@ height = pag.size().height
 SCREEN = Rect((0, 0,  width, height))
 
 class GazePointData():
-    def __init__(self, ADDRESS, gaze_data_list, gaze_file_name):
+    def __init__(self, ADDRESS, gaze_data_list, gaze_file_name, time_list,
+                 time_file_name):
         self.address= ADDRESS
         self.data_list = gaze_data_list
         self.csv_file_name = gaze_file_name
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(self.address)
         self.flag_record = 'OFF'
+        self.time_list = time_list
+        self.time_file_name= time_file_name
 
     # テスト前のカリブレーション実施する
     def start_calib(self):
@@ -90,10 +95,13 @@ class GazePointData():
     #パケットでのデータ抽出を実施、リストデータに追加
     def get_data(self):
         if self.flag_record == 'ON':
+            time_a= time.time() 
             rxdat = self.sock.recv(1024)    
             x =bytes.decode(rxdat)
+            print(f'time: {time_a}')
             print(x)
             self.data_list.append(x)
+            self.time_list.append(time_a)
         else:
             pass    
     # リスト型測定データをPandasのDataFrameに変換し、csvファイルにて保存    
@@ -101,6 +109,10 @@ class GazePointData():
         df = pd.DataFrame(self.data_list)
         df.to_csv(self.csv_file_name)
         print('Save_data')
+        
+        df_time = pd.DataFrame(self.time_list)
+        df_time.to_csv(self.time_file_name)
+        print('Save_time: Success!')
         
     # ソケットス通信をdisconnectする
     def disconnect(self):
@@ -192,12 +204,13 @@ class Ball:
     def save_data(self):
         df = pd.DataFrame(self.data_list)
         df.to_csv(self.csv_file_name)
-        print('Save_data')
+        print('Save_data: Success!')
 
 
 def main():
     
-    gp =  GazePointData(ADDRESS, gaze_data_list, gaze_file_name)
+    gp =  GazePointData(ADDRESS, gaze_data_list, gaze_file_name,time_list,
+                 time_file_name)
     gp.start_calib()
     gp.prep_get_data()
     
@@ -230,7 +243,7 @@ def main():
         #'''画面(screen)上に登場する人/物/背景を描画'''
         pad.draw(screen)
         ball.draw(screen)
-        
+       
 
         #'''画面(screen)の実表示'''
         pygame.display.update()
